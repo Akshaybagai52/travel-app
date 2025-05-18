@@ -2,6 +2,9 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
+
+dotenv.config();
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -40,9 +43,23 @@ const userSchema = new mongoose.Schema({
 
 // Encrypt password before saving
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
+  // Only run this function if password was actually modified
+  if (!this.isModified("password")) {
+    console.log("Password not modified, skipping hash");
+    return next();
+  }
+
+  try {
+    console.log("Hashing password...");
+    this.password = await bcrypt.hash(this.password, 12);
+    console.log("Password hashed successfully");
+    // Clear passwordConfirm field
+    this.passwordConfirm = undefined;
+    next();
+  } catch (err) {
+    console.error("Error hashing password:", err);
+    next(err);
+  }
 });
 
 // Generate JWT token
