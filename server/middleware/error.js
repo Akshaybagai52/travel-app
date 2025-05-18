@@ -1,4 +1,6 @@
 const AppError = require("../utils/appError");
+const dotenv = require("dotenv");
+dotenv.config({});
 
 const handleCastErrorDB = (err) => {
   const message = `Invalid ${err.path}: ${err.value}.`;

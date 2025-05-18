@@ -44,6 +44,8 @@ const createSendToken = (user, statusCode, res) => {
   });
 };
 
+const createAppError = require("../utils/error");
+
 exports.signup = catchAsync(async (req, res, next) => {
   try {
     const newUser = await User.create({
@@ -55,19 +57,18 @@ exports.signup = catchAsync(async (req, res, next) => {
 
     createSendToken(newUser, 201, res);
   } catch (err) {
-    console.log("err: ", err);
-    // Handle duplicate email error specifically
-    if (err.code === 11000 && err.keyPattern.email) {
-      return next(new AppError("Email already exists", 400)); // 400 = Bad Request
+    // Handle duplicate email
+    if (err.code === 11000) {
+      return next(createAppError("Email already exists", 400));
     }
 
-    // Handle validation errors (like password mismatch)
+    // Handle validation errors
     if (err.name === "ValidationError") {
       const messages = Object.values(err.errors).map((el) => el.message);
-      return next(new AppError(messages.join(". "), 400));
+      return next(createAppError(messages.join(", "), 400));
     }
 
-    // Generic error fallback
+    // Generic errors
     next(err);
   }
 });
